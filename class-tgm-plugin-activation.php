@@ -859,6 +859,13 @@ if ( ! class_exists( 'TGM_Plugin_Activation' ) ) {
 				$extra         = array();
 				$extra['slug'] = $slug; // Needed for potentially renaming of directory name.
 				$source        = $this->get_download_url( $slug );
+				$source_type   = $this->plugins[ $slug ]['source_type'];
+
+				if ( 'computed' === $source_type ) {
+					// re-compute the source type now that we've computed the source
+					$this->plugins[ $slug ]['source_type'] = $this->get_plugin_source_type( $source );
+				}
+
 				$api           = ( 'repo' === $this->plugins[ $slug ]['source_type'] ) ? $this->get_plugins_api( $slug ) : null;
 				$api           = ( false !== $api ) ? $api : null;
 
@@ -1456,7 +1463,9 @@ if ( ! class_exists( 'TGM_Plugin_Activation' ) ) {
 		 * @return string 'repo', 'external', or 'bundled'
 		 */
 		protected function get_plugin_source_type( $source ) {
-			if ( 'repo' === $source || preg_match( self::WP_REPO_REGEX, $source ) ) {
+			if ( is_callable($source) ) {
+				return 'computed';
+			} elseif ( 'repo' === $source || preg_match( self::WP_REPO_REGEX, $source ) ) {
 				return 'repo';
 			} elseif ( preg_match( self::IS_URL_REGEX, $source ) ) {
 				return 'external';
@@ -1631,6 +1640,8 @@ if ( ! class_exists( 'TGM_Plugin_Activation' ) ) {
 			$dl_source = '';
 
 			switch ( $this->plugins[ $slug ]['source_type'] ) {
+				case 'computed':
+					return call_user_func( $this->plugins[$slug]['source'] );
 				case 'repo':
 					return $this->get_wp_repo_download_url( $slug );
 				case 'external':

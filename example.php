@@ -97,6 +97,19 @@ function my_theme_register_required_plugins() {
 			'required' => false,
 		),
 
+		// This is an example of how to include a plugin from a URL or path generated at run time.
+		array(
+			'name'     => 'My Private Plugin',
+			'required' => false,
+			'source'   => function () {
+				$my_plugin_key = 'foo';
+				$plugin_info_request = wp_remote_get( 'https://www.example.com?key=' . $my_plugin_key );
+				$plugin_info_response = $plugin_info_request['http_response']->get_response_object();
+				$plugin_download_url = $plugin_info_response->body;
+				return $plugin_download_url;
+			},
+		),
+
 		// This is an example of the use of 'is_callable' functionality. A user could - for instance -
 		// have Yoast SEO installed *or* Yoast SEO Premium. The slug would in that last case be different, i.e.
 		// 'wordpress-seo-premium'.
